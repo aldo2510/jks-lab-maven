@@ -17,6 +17,7 @@ pipeline {
         }
 
         stage('SonarQube analysis') {
+            agent { label 'controller' }
             steps {
                 script {
                     withSonarQubeEnv('sonar-server') {

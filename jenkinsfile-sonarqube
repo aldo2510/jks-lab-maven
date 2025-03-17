@@ -8,6 +8,12 @@ pipeline {
         SONAR_SCANNER_ZIP = "sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip"
     }
     stages {
+        stage('Install unzip') {
+            steps {
+                sh 'apt-get update && apt-get install -y unzip curl'
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'mvn -B verify'

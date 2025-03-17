@@ -21,7 +21,8 @@ pipeline {
                 script {
                     withSonarQubeEnv('sonar-server') {
                         def scannerHome = tool 'scanner-default'
-                        echo "SonarScanner Home: ${scannerHome}"  // Esto imprimirá la ubicación de SonarScanner
+                        echo "SonarScanner Home: ${scannerHome}"
+                        sh "ls -lR ${scannerHome}"
                         sh "chmod +x ${scannerHome}/bin/sonar-scanner"
                         sh """${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=labmaven01 \

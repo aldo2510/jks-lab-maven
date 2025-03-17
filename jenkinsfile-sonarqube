@@ -21,10 +21,6 @@ pipeline {
                 script {
                     def scannerHome = tool 'scanner-default'
                     withSonarQubeEnv('sonar-server') {
-                        // Dar permisos de ejecución a sonar-scanner
-                        sh "chmod +x ${scannerHome}/bin/sonar-scanner"
-                        
-                        // Ejecutar sonar-scanner con los parámetros que necesitas
                         sh "${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=labmaven01 \
                             -Dsonar.projectName=labmaven01 \

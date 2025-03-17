@@ -19,9 +19,9 @@ pipeline {
         stage('SonarQube analysis') {
             steps {
                 script {
-                    def scannerHome = tool 'scanner-default'
-                }
                     withSonarQubeEnv('sonar-server') {
+                        def scannerHome = tool 'scanner-default'
+                        println ${scannerHome}
                         sh "${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=labmaven01 \
                             -Dsonar.projectName=labmaven01 \
@@ -38,6 +38,7 @@ pipeline {
                             -Dsonar.exclusions=**/*IT.java,**/*TEST.java,**/*Test.java,**/src/it**,**/src/test**,**/gradle/wrapper** \
                             -Dsonar.java.libraries=target/*.jar"
                     }
+                }
             }
         }
     }

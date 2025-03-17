@@ -19,9 +19,6 @@ pipeline {
         }
 
         stage('SonarQube analysis') {
-            agent {
-                docker { image 'sonarsource/sonar-scanner-cli:11' }
-            }
             steps {
                 script{
                     def scannerHome = tool 'scanner-default'

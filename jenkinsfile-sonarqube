@@ -1,9 +1,7 @@
 pipeline {
-
     agent {
         docker { image 'maven:3.6.3-openjdk-11-slim' }
     }
-
     stages {
 
         stage('Build') {   
@@ -11,7 +9,7 @@ pipeline {
                 sh 'mvn -B verify'
             }
 
-            post{
+            post {
                 success {
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true, onlyIfSuccessful: true
                 }
@@ -20,9 +18,13 @@ pipeline {
 
         stage('SonarQube analysis') {
             steps {
-                script{
+                script {
                     def scannerHome = tool 'scanner-default'
                     withSonarQubeEnv('sonar-server') {
+                        // Dar permisos de ejecución a sonar-scanner
+                        sh "chmod +x ${scannerHome}/bin/sonar-scanner"
+                        
+                        // Ejecutar sonar-scanner con los parámetros que necesitas
                         sh "${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=labmaven01 \
                             -Dsonar.projectName=labmaven01 \
@@ -38,10 +40,9 @@ pipeline {
                             -Dsonar.coverage.jacoco.xmlReportPaths=target/jacoco.xml \
                             -Dsonar.exclusions=**/*IT.java,**/*TEST.java,**/*Test.java,**/src/it**,**/src/test**,**/gradle/wrapper** \
                             -Dsonar.java.libraries=target/*.jar"
-                        }
                     }
                 }
             }
-
+        }
     }
 }

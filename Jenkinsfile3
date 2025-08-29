@@ -6,7 +6,6 @@ pipeline {
     }
     environment {
         CLOUDSDK_CORE_PROJECT='canvas-landing-397000'
-//        CLIENT_EMAIL='jenkins@insights-api-localdev.iam.gserviceaccount.com'
         GCLOUD_CREDS=credentials('gcloud-creds')
         }
     stages {

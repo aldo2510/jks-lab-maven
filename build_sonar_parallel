@@ -1,13 +1,14 @@
 pipeline {
 
-    agent {
-        docker { image 'maven:3.8.5-openjdk-11-slim' }
-    }
+    agent { label 'controller' }
 
     stages {
         stage('Parallel Execution') {
           parallel {
-            stage('Build') {   
+            stage('Build') {
+                agent {
+                    docker { image 'maven:3.8.5-openjdk-11-slim' }
+                }
                 steps {
                     sh 'mvn -B verify'
                 }

@@ -21,7 +21,7 @@ pipeline {
     
             stage('SonarQube analysis') {
                 agent {
-                    docker { image 'sonarsource/sonar-scanner-cli:11' }
+                    docker { image 'maven:3.8.5-openjdk-11-slim' }
                 }
                 steps {
                     script{

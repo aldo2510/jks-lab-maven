@@ -25,7 +25,6 @@ jobs:
           JF_URL: ${{ vars.JF_URL }}            # ej: https://aldo2510.jfrog.io
         with:
           oidc-provider-name: github-actions    # el nombre que diste en JFrog
-
       - name: Build
         run: mvn -q -B clean package
 

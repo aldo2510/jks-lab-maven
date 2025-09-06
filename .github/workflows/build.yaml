@@ -18,28 +18,71 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          
+
+      # (Opcional) Debug: imprime issuer/sub/audience reales del ID token
       - name: Inspect OIDC audience
         uses: actions/github-script@v7
         with:
           script: |
-            // core ya existe; NO usar require('@actions/core')
-            const idt = await core.getIDToken(); // sin audience: usa el default
-            // Decodificar base64url del JWT
+            const idt = await core.getIDToken();
             const b64u = idt.split('.')[1];
-            const fix = (s) => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return s; };
+            const fix = s => { s=s.replace(/-/g,'+').replace(/_/g,'/'); while (s.length%4) s+='='; return s; };
             const payload = JSON.parse(Buffer.from(fix(b64u), 'base64').toString('utf8'));
             core.info('OIDC issuer:   ' + payload.iss);
             core.info('OIDC subject:  ' + payload.sub);
             core.info('OIDC audience: ' + (Array.isArray(payload.aud) ? payload.aud.join(',') : payload.aud));
 
+      # 1) Obtener ID token de GitHub (con el audience por defecto que ya viste en logs)
+      - name: Get GitHub OIDC ID token
+        id: get-oidc
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const idt = await core.getIDToken(); // usa el audience por defecto
+            core.setOutput('id_token', idt);
 
-      - name: Setup JFrog CLI via OIDC
+      # 2) Intercambiar ID token -> Access token de JFrog (provider_name debe coincidir con tu OIDC)
+      - name: Exchange OIDC -> JFrog access token
+        id: exchange
+        env:
+          JF_URL: ${{ vars.JF_URL }}          # ej: https://osenterpriseibk.jfrog.io
+          ID_TOKEN: ${{ steps.get-oidc.outputs.id_token }}
+          JF_PROVIDER: github-actions         # EXACTO como el Provider Name en JFrog
+        run: |
+          set -euo pipefail
+          BODY=$(cat <<EOF
+          {
+            "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+            "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
+            "subject_token": "$ID_TOKEN",
+            "provider_name": "$JF_PROVIDER"
+          }
+          EOF
+          )
+          RESP=$(curl -sS -X POST "$JF_URL/access/api/v1/oidc/token" \
+            -H "Content-Type: application/json" \
+            -d "$BODY")
+          echo "$RESP" | jq .
+          TOKEN=$(echo "$RESP" | jq -r '.access_token // empty')
+          if [ -z "$TOKEN" ]; then
+            echo "::error::No se obtuvo access_token desde JFrog"; exit 1;
+          fi
+          echo "::add-mask::$TOKEN"
+          echo "JF_ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      # 3) Instalar JFrog CLI (sin intentar OIDC automático)
+      - name: Setup JFrog CLI (install only)
         uses: jfrog/setup-jfrog-cli@v4
         env:
-          JF_URL: ${{ vars.JF_URL }}            # ej: https://aldo2510.jfrog.io
-        with:
-          oidc-provider-name: github-actions    # el nombre que diste en JFrog
+          JF_URL: ${{ vars.JF_URL }}
+
+      # 4) Configurar un server-id usando el access token efímero
+      - name: Configure JFrog CLI
+        run: |
+          jf c add ci --artifactory-url="${{ vars.JF_URL }}/artifactory" \
+                      --access-token="$JF_ACCESS_TOKEN" --interactive=false
+          jf c use ci
+
       - name: Build
         run: mvn -q -B clean package
 
@@ -47,4 +90,4 @@ jobs:
         run: |
           jf rt u "target/*.jar" \
             "ibk-generic-dev/${{ github.repository }}/$GITHUB_RUN_NUMBER/" \
-            --flat=false
+            --flat=false --server-id=ci

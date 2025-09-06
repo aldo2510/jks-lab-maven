@@ -20,16 +20,19 @@ jobs:
           java-version: '17'
           
       - name: Inspect OIDC audience
-        id: inspect-oidc
         uses: actions/github-script@v7
         with:
           script: |
-            const core = require('@actions/core');
-            const idt = await core.getIDToken(); // sin audience -> usa el default de GitHub
-            const payload = JSON.parse(Buffer.from(idt.split('.')[1], 'base64').toString());
-            core.info('OIDC issuer: ' + payload.iss);
-            core.info('OIDC subject: ' + payload.sub);
-            core.info('OIDC audience: ' + JSON.stringify(payload.aud));
+            // core ya existe; NO usar require('@actions/core')
+            const idt = await core.getIDToken(); // sin audience: usa el default
+            // Decodificar base64url del JWT
+            const b64u = idt.split('.')[1];
+            const fix = (s) => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return s; };
+            const payload = JSON.parse(Buffer.from(fix(b64u), 'base64').toString('utf8'));
+            core.info('OIDC issuer:   ' + payload.iss);
+            core.info('OIDC subject:  ' + payload.sub);
+            core.info('OIDC audience: ' + (Array.isArray(payload.aud) ? payload.aud.join(',') : payload.aud));
+
 
       - name: Setup JFrog CLI via OIDC
         uses: jfrog/setup-jfrog-cli@v4

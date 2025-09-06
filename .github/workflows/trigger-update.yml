@@ -1,20 +1,54 @@
-name: trigger reusable (update manifest in ec-maven-users-api)
+name: Update manifest in ec-maven-users-api
 
 on:
   workflow_dispatch:
     inputs:
       new_tag:
-        description: "Nuevo tag (p.ej. 1.0.2)"
+        description: "Nuevo tag de la imagen"
         required: true
-        default: "1.0.2"
-      file_path:
-        description: "Ruta del manifest a modificar en el repo destino"
-        required: false
-        default: "k8s/test.yml"
+        default: "1.0.1"
 
 jobs:
-  call-update:
-    uses: aldo2510/ec-maven-users-api/.github/workflows/update-manifest.yml@main
-    with:
-      new_tag: ${{ inputs.new_tag }}
-      file_path: ${{ inputs.file_path }}
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ec-maven-users-api
+        uses: actions/checkout@v4
+        with:
+          repository: aldo2510/ec-maven-users-api
+          ref: main
+          path: target
+          token: ${{ secrets.TARGET_REPO_TOKEN }}
+
+      - name: Update image tag in k8s/test.yml
+        working-directory: target
+        env:
+          FILE_PATH: k8s/test.yml
+          NEW_TAG: ${{ github.event.inputs.new_tag }}
+        run: |
+          echo "ANTES ====="
+          grep -nE '^\s*image:' "$FILE_PATH" || true
+
+          # Cambia solo el tag después de ':'
+          sed -E -i 's#^( *image: +)([^:]+):[^[:space:]]+#\1\2:'"$NEW_TAG"'#' "$FILE_PATH"
+
+          echo "DESPUÉS ====="
+          grep -nE '^\s*image:' "$FILE_PATH" || true
+
+      - name: Commit & PR
+        working-directory: target
+        env:
+          GH_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
+          BRANCH: bump-image-${{ github.run_id }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add k8s/test.yml
+          git commit -m "chore: bump image tag to ${{ github.event.inputs.new_tag }}"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "Bump image tag to ${{ github.event.inputs.new_tag }}" \
+            --body "Auto-PR desde jks-lab-maven" \
+            --base main \
+            --head "$BRANCH"

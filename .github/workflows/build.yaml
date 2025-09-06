@@ -40,4 +40,4 @@ jobs:
           # Sube a un repo "generic" (ajusta nombre/ruta a tu estándar)
           jf rt u "target/*.jar" \
             "ibk-generic-dev/${{ github.repository }}/$GITHUB_RUN_NUMBER/" \
-            --flat=false
+            --flat=true

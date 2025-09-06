@@ -26,7 +26,6 @@ jobs:
           JF_URL: ${{ vars.JF_URL }}     # ej: https://osenterpriseibk.jfrog.io
         with:
           oidc-provider-name: setup-jfrog-cli
-          disable-autoconfig: true
           # Si en JFrog configuraste audience, descomenta:
           # oidc-audience: osenterpriseibk
 

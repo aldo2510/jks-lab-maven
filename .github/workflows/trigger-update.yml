@@ -1,0 +1,20 @@
+name: trigger reusable (update manifest in ec-maven-users-api)
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_tag:
+        description: "Nuevo tag (p.ej. 1.0.2)"
+        required: true
+        default: "1.0.2"
+      file_path:
+        description: "Ruta del manifest a modificar en el repo destino"
+        required: false
+        default: "k8s/test.yml"
+
+jobs:
+  call-update:
+    uses: aldo2510/ec-maven-users-api/.github/workflows/update-manifest.yml@main
+    with:
+      new_tag: ${{ inputs.new_tag }}
+      file_path: ${{ inputs.file_path }}

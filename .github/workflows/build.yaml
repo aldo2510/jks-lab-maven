@@ -47,7 +47,7 @@ jobs:
         env:
           JF_URL: ${{ vars.JF_URL }}          # ej: https://osenterpriseibk.jfrog.io
           ID_TOKEN: ${{ steps.get-oidc.outputs.id_token }}
-          JF_PROVIDER: github-actions         # EXACTO como el Provider Name en JFrog
+          JF_PROVIDER: setup-jfrog-cli         # EXACTO como el Provider Name en JFrog
         run: |
           set -euo pipefail
           BODY=$(cat <<EOF

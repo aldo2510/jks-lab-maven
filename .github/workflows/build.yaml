@@ -33,6 +33,7 @@ jobs:
             core.info('OIDC subject:  ' + payload.sub);
             core.info('OIDC audience: ' + (Array.isArray(payload.aud) ? payload.aud.join(',') : payload.aud));
 
+
       - name: Setup JFrog CLI via OIDC
         uses: jfrog/setup-jfrog-cli@v4
         env:

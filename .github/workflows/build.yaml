@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '11'
 
       # (Opcional) Debug: imprime issuer/sub/audience reales del ID token
       - name: Inspect OIDC audience

@@ -1,0 +1,36 @@
+name: Build & Publish (OIDC)
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup JFrog CLI via OIDC
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ vars.JF_URL }}            # ej: https://aldo2510.jfrog.io
+        with:
+          oidc-provider-name: github-actions    # el nombre que diste en JFrog
+
+      - name: Build
+        run: mvn -q -B clean package
+
+      - name: Upload JAR
+        run: |
+          jf rt u "target/*.jar" \
+            "ibk-generic-dev/${{ github.repository }}/$GITHUB_RUN_NUMBER/" \
+            --flat=false
